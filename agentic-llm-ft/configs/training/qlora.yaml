@@ -15,3 +15,5 @@ logging_steps: 10
 save_steps: 100
 resume_from_checkpoint: null
 wandb: false
+use_mps: false
+no_cuda: false

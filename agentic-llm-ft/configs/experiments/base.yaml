@@ -21,5 +21,7 @@ training:
   save_steps: 100
   resume_from_checkpoint: null
   wandb: false
+  use_mps: true
+  no_cuda: false
 eval:
   output_dir: outputs/eval

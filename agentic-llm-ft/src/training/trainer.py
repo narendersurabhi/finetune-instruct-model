@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import platform
 from pathlib import Path
 from typing import Any
 
@@ -21,8 +22,18 @@ def run_sft(cfg: dict[str, Any], registry: ToolRegistry) -> None:
     model_name = cfg["model"]["name"]
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
+    is_macos = platform.system() == "Darwin"
+    use_qlora = cfg["training"].get("qlora", False)
+    if use_qlora and is_macos:
+        raise ValueError(
+            "QLoRA with bitsandbytes is not supported on macOS. Use LoRA on MPS/CPU instead."
+        )
+
+    use_mps = is_macos and cfg["training"].get("use_mps", True)
+    device_map = "mps" if use_mps else "auto"
+
     quant_cfg = None
-    if cfg["training"].get("qlora", False):
+    if use_qlora:
         quant_cfg = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
@@ -32,7 +43,7 @@ def run_sft(cfg: dict[str, Any], registry: ToolRegistry) -> None:
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         quantization_config=quant_cfg,
-        device_map="auto",
+        device_map=device_map,
     )
 
     lora = build_lora_config(
@@ -54,6 +65,8 @@ def run_sft(cfg: dict[str, Any], registry: ToolRegistry) -> None:
         learning_rate=cfg["training"]["learning_rate"],
         bf16=cfg["training"].get("bf16", False),
         fp16=cfg["training"].get("fp16", False),
+        no_cuda=cfg["training"].get("no_cuda", False),
+        use_mps_device=use_mps,
         logging_steps=cfg["training"].get("logging_steps", 10),
         save_steps=cfg["training"].get("save_steps", 200),
         resume_from_checkpoint=cfg["training"].get("resume_from_checkpoint"),

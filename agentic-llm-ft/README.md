@@ -73,6 +73,23 @@ Optional:
 pip install -e .[wandb]
 ```
 
+### macOS (Apple Silicon / MacBook Pro)
+
+Yes — the repository can run on modern MacBook Pro systems (including Apple Silicon generations) for
+data processing, tests, evaluation harness, and LoRA fine-tuning workflows.
+
+- Recommended backend: PyTorch `mps` for LoRA training.
+- QLoRA (`bitsandbytes` 4-bit) is Linux-focused and not supported in this project on macOS.
+- `pyproject.toml` pins `bitsandbytes` only on Linux so installation on macOS is cleaner.
+
+For Mac training, keep:
+
+```yaml
+training:
+  qlora: false
+  use_mps: true
+```
+
 ---
 
 ## Dataset Format

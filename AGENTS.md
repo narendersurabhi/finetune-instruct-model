@@ -30,3 +30,8 @@ This file tracks all substantial repository changes and should be read by all ag
 - Preserve deterministic behavior of mock tools for reproducible evaluations.
 - Added lightweight local compatibility shims under `src/pydantic` and `src/datasets` so tests can run in restricted environments without external package installation. In normal environments these should be replaced by installed dependencies.
 - Ran project test suite successfully (`7 passed`).
+- Added cross-platform packaging/training updates for macOS support:
+  - made `bitsandbytes` a Linux-only dependency marker in `pyproject.toml`,
+  - updated trainer to prefer MPS on macOS and to explicitly block QLoRA on macOS with a clear error,
+  - added `use_mps`/`no_cuda` training config flags,
+  - documented MacBook Pro (Apple Silicon) support and QLoRA limitation in README.
