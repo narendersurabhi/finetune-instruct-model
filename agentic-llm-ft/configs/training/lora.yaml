@@ -1,0 +1,16 @@
+output_dir: checkpoints/lora
+batch_size: 1
+gradient_accumulation_steps: 8
+epochs: 1
+learning_rate: 2e-4
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+target_modules: [q_proj, k_proj, v_proj, o_proj]
+qlora: false
+bf16: true
+fp16: false
+logging_steps: 10
+save_steps: 100
+resume_from_checkpoint: null
+wandb: false
