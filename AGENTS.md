@@ -38,3 +38,9 @@ This file tracks all substantial repository changes and should be read by all ag
 - Added first-class `uv` package-management workflow support:
   - extended `Makefile` with `install-uv`, `lock`, and `sync` targets,
   - updated README setup/testing sections with recommended `uv` commands and pip alternative.
+- README refreshed with clearer operator-focused guidance:
+  - added end-to-end quickstart (setup, test, eval, inference),
+  - added explicit tool schema example and artifact expectations,
+  - clarified eval metric placeholders (`validation_loss`, `perplexity`),
+  - documented trace row fields,
+  - added implementation notes about local `pydantic`/`datasets` shims vs production dependencies.

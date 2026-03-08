@@ -2,6 +2,10 @@
 
 Production-grade Python foundation for fine-tuning open-source LLMs for **reasoning**, **planning**, and **strict tool-calling** in agentic AI systems.
 
+> This repository is an engineering **starter foundation**: data contracts, tool schema validation,
+> agent loop simulation, and evaluation harness are implemented so teams can iterate quickly toward
+> real model training and real tool APIs.
+
 ## Features
 
 - Canonical dataset format for tool-aware supervised fine-tuning.
@@ -40,6 +44,31 @@ Configured via YAML:
 - `Qwen/Qwen2.5-7B-Instruct`
 - `mistralai/Mistral-7B-Instruct-v0.3`
 - `meta-llama/Llama-3-8B-Instruct`
+
+---
+
+## End-to-End Quickstart
+
+```bash
+# 1) environment
+uv venv --python 3.11
+source .venv/bin/activate
+uv sync --extra dev
+
+# 2) run tests
+uv run pytest
+
+# 3) run evaluation harness on sample data
+uv run python scripts/eval.py --dataset data/sample/eval.jsonl --out outputs/eval
+
+# 4) run agent loop inference
+uv run python scripts/inference.py --mode agent --prompt "What's the weather in Seattle?"
+```
+
+After step (3), inspect:
+- `outputs/eval/metrics.json`
+- `outputs/eval/predictions.jsonl`
+- `outputs/eval/tool_call_analysis.json`
 
 ---
 
@@ -136,6 +165,25 @@ Validation checks include:
 - missing final answers
 - malformed tool results
 
+### Tool Schema Example
+
+```json
+{
+  "name": "get_weather",
+  "description": "Get current weather",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "city": {"type": "string"},
+      "unit": {"type": "string"}
+    },
+    "required": ["city"]
+  }
+}
+```
+
+Tools are registered and validated by `ToolRegistry`, then executed by `ToolExecutor`.
+
 ---
 
 ## Training
@@ -181,6 +229,9 @@ Metrics include:
 - `tool_call_recall`
 - `final_answer_correctness`
 
+`validation_loss` and `perplexity` are currently placeholders in the local harness and should be
+wired to model-forward evaluation when integrating a real checkpoint pipeline.
+
 ---
 
 ## Inference
@@ -211,6 +262,13 @@ outputs/{run_id}/agent_traces.jsonl
 
 (For local scripts, run directory is defined by CLI `--out`.)
 
+Trace rows include:
+- `raw_model_output`
+- `parsed_json`
+- `tool_calls`
+- `tool_results`
+- `final_answer`
+
 ---
 
 ## Structured Output Contract
@@ -237,6 +295,15 @@ pytest
 ```
 
 Tests are lightweight and do not download large models.
+
+---
+
+## Implementation Notes
+
+- For constrained/offline environments, this repo currently includes lightweight local compatibility
+  shims under `src/pydantic` and `src/datasets` to keep tests runnable without full package installs.
+- For production deployment, prefer standard upstream dependencies (`pydantic`, `datasets`) and remove
+  shims once environment packaging is stable.
 
 ---
 
