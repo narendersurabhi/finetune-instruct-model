@@ -61,6 +61,27 @@ agentic-llm-ft/
 
 ## Setup
 
+### Recommended: `uv` (fast, reproducible)
+
+If you are starting fresh, **yes, use `uv`**. It is faster than plain pip/venv and gives better lockfile-driven reproducibility.
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install 3.11
+uv venv --python 3.11
+source .venv/bin/activate
+uv sync --extra dev
+```
+
+Optional lockfile workflow:
+
+```bash
+uv lock
+uv sync --frozen --extra dev
+```
+
+### Alternative: pip/venv
+
 ```bash
 python3.11 -m venv .venv
 source .venv/bin/activate
@@ -204,6 +225,12 @@ outputs/{run_id}/agent_traces.jsonl
 ---
 
 ## Testing
+
+```bash
+uv run pytest
+```
+
+Or with pip environment:
 
 ```bash
 pytest

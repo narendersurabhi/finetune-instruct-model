@@ -35,3 +35,6 @@ This file tracks all substantial repository changes and should be read by all ag
   - updated trainer to prefer MPS on macOS and to explicitly block QLoRA on macOS with a clear error,
   - added `use_mps`/`no_cuda` training config flags,
   - documented MacBook Pro (Apple Silicon) support and QLoRA limitation in README.
+- Added first-class `uv` package-management workflow support:
+  - extended `Makefile` with `install-uv`, `lock`, and `sync` targets,
+  - updated README setup/testing sections with recommended `uv` commands and pip alternative.
