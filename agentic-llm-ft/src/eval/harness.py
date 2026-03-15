@@ -2,17 +2,69 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from agent import OutputParser
 from data import load_examples
 from eval.metrics import EvalRecord, compute_metrics
+from prompts import render_eval_messages, render_training_messages
+from schemas import DatasetExample
 from tools import ToolRegistry
 
-ModelFn = Callable[[str], str]
+# Unified model interface: both eval and agent use messages in, text out.
+MessageModelFn = Callable[[list[dict[str, str]]], str]
+
+if TYPE_CHECKING:
+    from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
-def run_eval(dataset_path: Path, model_fn: ModelFn, registry: ToolRegistry, output_dir: Path) -> dict:
+def _compute_validation_loss(
+    model: "PreTrainedModel",
+    tokenizer: "PreTrainedTokenizerBase",
+    examples: list[DatasetExample],
+    max_seq_len: int,
+) -> tuple[float, float]:
+    """Compute mean validation loss and perplexity over examples (full-sequence causal LM)."""
+    import torch
+
+    model.eval()
+    total_loss = 0.0
+    n = 0
+    for ex in examples:
+        messages = render_training_messages(ex)
+        tokenizer_output = tokenizer.apply_chat_template(
+            messages,
+            tokenize=True,
+            truncation=True,
+            max_length=max_seq_len,
+            add_generation_prompt=False,
+            return_tensors="pt",
+        )
+        if tokenizer_output.dim() == 1:
+            tokenizer_output = tokenizer_output.unsqueeze(0)
+        input_ids = tokenizer_output.to(model.device)
+        labels = input_ids.clone()
+        with torch.no_grad():
+            outputs = model(input_ids=input_ids, labels=labels)
+            total_loss += outputs.loss.item()
+        n += 1
+    if n == 0:
+        return float("nan"), float("nan")
+    mean_loss = total_loss / n
+    perplexity = float(__import__("math").exp(mean_loss))
+    return mean_loss, perplexity
+
+
+def run_eval(
+    dataset_path: Path,
+    model_fn: MessageModelFn,
+    registry: ToolRegistry,
+    output_dir: Path,
+    *,
+    model: "PreTrainedModel | None" = None,
+    tokenizer: "PreTrainedTokenizerBase | None" = None,
+    max_seq_len: int = 4096,
+) -> dict[str, Any]:
     examples = load_examples(dataset_path)
     parser = OutputParser()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -22,7 +74,8 @@ def run_eval(dataset_path: Path, model_fn: ModelFn, registry: ToolRegistry, outp
     analyses: list[dict] = []
 
     for ex in examples:
-        raw = model_fn(ex.user_prompt)
+        messages = render_eval_messages(ex)
+        raw = model_fn(messages)
         parsed = parser.parse(raw)
         predicted_tools = {c.name for c in parsed.tool_calls}
         target_tools = {c["name"] for c in ex.assistant_tool_calls}
@@ -52,9 +105,16 @@ def run_eval(dataset_path: Path, model_fn: ModelFn, registry: ToolRegistry, outp
             }
         )
 
-    metrics = {
-        "validation_loss": None,
-        "perplexity": None,
+    validation_loss: float | None = None
+    perplexity: float | None = None
+    if model is not None and tokenizer is not None:
+        validation_loss, perplexity = _compute_validation_loss(
+            model, tokenizer, examples, max_seq_len
+        )
+
+    metrics: dict[str, Any] = {
+        "validation_loss": validation_loss,
+        "perplexity": perplexity,
         **compute_metrics(records),
     }
 

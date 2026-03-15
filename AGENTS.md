@@ -8,6 +8,18 @@ This file tracks all substantial repository changes and should be read by all ag
 - Sample datasets and test suite added.
 
 ## Change Log
+### 2026-03-15 (continued)
+- **Unified model interface:** Eval and agent both use a single **messages-based** interface: `MessageModelFn = Callable[[list[dict]], str]`. Added `render_eval_messages(example)` in `prompts/rendering.py` to build input messages for eval (no assistant turn). Eval harness now takes `model_fn(messages)` and builds messages per example; agent runtime unchanged. Exported `MessageModelFn` from `eval` package.
+- **Hydra integration:** All three entry points use Hydra. Added `configs/config.yaml` (single composed config with `hydra.job.chdir: false`). `scripts/train.py`, `scripts/run_eval.py`, and `scripts/inference.py` use `@hydra.main(config_path=<abs path to configs>, config_name="config")`. Config path is resolved from `__file__` so scripts work from any CWD. Overrides via CLI (e.g. `training.epochs=2`, `eval.dataset_path=...`). Root entry point for eval renamed to `run_eval.py` to avoid shadowing the `eval` package when importing; `eval.py` removed.
+- **Validation loss and perplexity:** Eval harness now accepts optional `model`, `tokenizer`, and `max_seq_len`. When provided, `_compute_validation_loss()` runs a forward pass over each eval example (full-sequence causal LM), aggregates mean loss, and sets `perplexity = exp(mean_loss)`. Script `run_eval.py` supports `eval.checkpoint_path` in config; when set, loads the checkpoint and passes model/tokenizer to `run_eval()` so metrics include real `validation_loss` and `perplexity`. README and config updated (eval.checkpoint_path, eval.max_seq_len).
+
+### 2026-03-15
+- **High-priority fixes (architecture review):**
+  - Replaced invalid `ValidationError.from_exception_data` in `ToolRegistry.execute` with a clear `ToolArgumentsError` (ValueError subclass) and `_validation_failure_reason()` for better diagnostics. Exported `ToolArgumentsError` from `tools` package.
+  - Implemented tokenization and `max_seq_len` in the training pipeline: added `tokenize_dataset()` in `data/dataset.py` (uses tokenizer `apply_chat_template`, truncation to `max_seq_len`, and produces `input_ids`/`attention_mask`/`labels`), trainer now tokenizes the raw message dataset and uses `DataCollatorForLanguageModeling`; `model.max_seq_len` is read from config and pad_token is set when missing.
+  - Documented tokenization and sequence length in README (Training section).
+  - Added test for `ToolArgumentsError` on invalid tool arguments.
+
 ### 2026-03-07
 - Created full project skeleton under `agentic-llm-ft/` with Python packaging, Makefile, and environment templates.
 - Added Hydra YAML configs for model/data/training/eval/experiments.

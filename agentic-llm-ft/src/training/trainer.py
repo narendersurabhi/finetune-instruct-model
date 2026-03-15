@@ -9,18 +9,23 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
+    DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
 )
 
-from data import build_hf_dataset
+from data import build_hf_dataset, tokenize_dataset
 from training.lora import build_lora_config
 from tools import ToolRegistry
 
 
 def run_sft(cfg: dict[str, Any], registry: ToolRegistry) -> None:
     model_name = cfg["model"]["name"]
+    max_seq_len = cfg["model"].get("max_seq_len", 4096)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
     is_macos = platform.system() == "Darwin"
     use_qlora = cfg["training"].get("qlora", False)
@@ -55,7 +60,14 @@ def run_sft(cfg: dict[str, Any], registry: ToolRegistry) -> None:
     model = get_peft_model(model, lora)
     model.gradient_checkpointing_enable()
 
-    dataset = build_hf_dataset(Path(cfg["data"]["train_path"]), registry)
+    raw_dataset = build_hf_dataset(Path(cfg["data"]["train_path"]), registry)
+    dataset = tokenize_dataset(raw_dataset, tokenizer=tokenizer, max_seq_len=max_seq_len)
+
+    data_collator = DataCollatorForLanguageModeling(
+        tokenizer=tokenizer,
+        mlm=False,
+        pad_to_multiple_of=8,
+    )
 
     args = TrainingArguments(
         output_dir=cfg["training"]["output_dir"],
@@ -73,6 +85,12 @@ def run_sft(cfg: dict[str, Any], registry: ToolRegistry) -> None:
         report_to=["wandb"] if cfg["training"].get("wandb", False) else [],
     )
 
-    trainer = Trainer(model=model, args=args, train_dataset=dataset, tokenizer=tokenizer)
+    trainer = Trainer(
+        model=model,
+        args=args,
+        train_dataset=dataset,
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+    )
     trainer.train(resume_from_checkpoint=cfg["training"].get("resume_from_checkpoint"))
     trainer.save_model(cfg["training"]["output_dir"])

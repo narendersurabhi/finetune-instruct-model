@@ -22,7 +22,7 @@ train:
 	$(PYTHON) scripts/train.py
 
 eval:
-	$(PYTHON) scripts/eval.py
+	$(PYTHON) run_eval.py
 
 infer:
 	$(PYTHON) scripts/inference.py

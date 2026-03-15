@@ -31,6 +31,12 @@ class StubModel:
         return json.dumps({"plan": ["Answer directly"], "tool_calls": [], "final_answer": "Done."})
 
 
-def run_agent_inference(registry: ToolRegistry, prompt: str, run_dir: Path) -> str:
+def run_agent_inference(
+    registry: ToolRegistry,
+    prompt: str,
+    run_dir: Path,
+    *,
+    system_prompt: str = "You are an agentic assistant.",
+) -> str:
     runtime = AgentRuntime(registry=registry, model_fn=StubModel(), run_dir=run_dir)
-    return runtime.run(system_prompt="You are an agentic assistant.", user_prompt=prompt)
+    return runtime.run(system_prompt=system_prompt, user_prompt=prompt)

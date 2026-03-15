@@ -1,0 +1,43 @@
+# Main Hydra config. Override from CLI: e.g. training.epochs=2 model.max_seq_len=2048
+# Run from repo root: python run_eval.py  (or train.py / inference.py). Override: eval.output_dir=... training.epochs=2
+hydra:
+  job:
+    chdir: false
+model:
+  name: Qwen/Qwen2.5-7B-Instruct
+  max_seq_len: 4096
+data:
+  train_path: data/sample/train.jsonl
+  eval_path: data/sample/eval.jsonl
+training:
+  output_dir: checkpoints/lora
+  batch_size: 1
+  gradient_accumulation_steps: 8
+  epochs: 1
+  learning_rate: 2e-4
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj]
+  qlora: false
+  bf16: true
+  fp16: false
+  logging_steps: 10
+  save_steps: 100
+  resume_from_checkpoint: null
+  wandb: false
+  use_mps: true
+  no_cuda: false
+eval:
+  output_dir: outputs/eval
+  dataset_path: data/sample/eval.jsonl
+  max_examples: null
+  max_seq_len: 4096
+  # If set, load this checkpoint to compute validation_loss and perplexity
+  checkpoint_path: null
+inference:
+  output_dir: outputs/inference
+  system_prompt: "You are an agentic assistant."
+  mode: agent
+  prompt: "What's the weather in Seattle?"
+  input: data/sample/batch_prompts.txt

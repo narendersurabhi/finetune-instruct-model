@@ -1,3 +1,3 @@
-from .harness import run_eval
+from .harness import MessageModelFn, run_eval
 
-__all__ = ["run_eval"]
+__all__ = ["MessageModelFn", "run_eval"]

@@ -1,3 +1,26 @@
+Metadata-Version: 2.4
+Name: agentic-llm-ft
+Version: 0.1.0
+Summary: Production-grade fine-tuning scaffold for agentic LLMs with tool-calling
+Author: Agentic LLM Team
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: transformers>=4.44.0
+Requires-Dist: peft>=0.12.0
+Requires-Dist: trl>=0.10.1
+Requires-Dist: datasets>=2.20.0
+Requires-Dist: accelerate>=0.33.0
+Requires-Dist: pydantic>=2.8.0
+Requires-Dist: hydra-core>=1.3.2
+Requires-Dist: pytest>=8.2.0
+Requires-Dist: pyyaml>=6.0.1
+Requires-Dist: bitsandbytes>=0.43.3; platform_system == "Linux"
+Provides-Extra: wandb
+Requires-Dist: wandb>=0.17.0; extra == "wandb"
+Provides-Extra: dev
+Requires-Dist: ruff>=0.5.0; extra == "dev"
+Requires-Dist: mypy>=1.10.0; extra == "dev"
+
 # agentic-llm-ft
 
 Production-grade Python foundation for fine-tuning open-source LLMs for **reasoning**, **planning**, and **strict tool-calling** in agentic AI systems.
@@ -37,20 +60,6 @@ Production-grade Python foundation for fine-tuning open-source LLMs for **reason
 
 ---
 
-## Configuration (Hydra)
-
-A single config file `configs/config.yaml` drives train, eval, and inference. Override any key from the CLI:
-
-```bash
-python train.py training.epochs=2 model.max_seq_len=2048
-python run_eval.py eval.dataset_path=data/my/eval.jsonl eval.checkpoint_path=checkpoints/lora
-python inference.py inference.mode=batch inference.input=prompts.txt
-```
-
-`hydra.job.chdir` is set to `false` so relative paths in the config are resolved from the directory you run the command in (typically the repo root).
-
----
-
 ## Supported Base Models
 
 Configured via YAML:
@@ -72,13 +81,11 @@ uv sync --extra dev
 # 2) run tests
 uv run pytest
 
-# 3) run evaluation harness on sample data (config in configs/config.yaml; override with Hydra)
-uv run python run_eval.py
-# Or: uv run python run_eval.py eval.dataset_path=data/sample/eval.jsonl eval.output_dir=outputs/eval
+# 3) run evaluation harness on sample data
+uv run python scripts/eval.py --dataset data/sample/eval.jsonl --out outputs/eval
 
 # 4) run agent loop inference
-uv run python inference.py
-# Or: uv run python inference.py inference.mode=agent inference.prompt="What's the weather in Seattle?"
+uv run python scripts/inference.py --mode agent --prompt "What's the weather in Seattle?"
 ```
 
 After step (3), inspect:
@@ -98,7 +105,7 @@ agentic-llm-ft/
   src/
   tests/
   train.py
-  run_eval.py
+  eval.py
   inference.py
 ```
 
@@ -222,20 +229,12 @@ Training supports:
 - checkpoint resume
 - optional W&B logging
 
-**Tokenization and sequence length:** The training pipeline converts each example’s `messages` (system/user/assistant) into token ids using the tokenizer’s `apply_chat_template`, then truncates to `model.max_seq_len` from your config. The tokenized dataset has `input_ids`, `attention_mask`, and `labels`; batching and padding are handled by `DataCollatorForLanguageModeling`. Set `model.max_seq_len` in your experiment YAML (e.g. `configs/experiments/base.yaml`).
-
 ---
 
 ## Evaluation
 
-Config is in `configs/config.yaml` (Hydra). Override from the CLI:
-
 ```bash
-python run_eval.py
-# Override paths/metrics:
-python run_eval.py eval.dataset_path=data/sample/eval.jsonl eval.output_dir=outputs/eval
-# With a checkpoint to compute validation_loss and perplexity:
-python run_eval.py eval.checkpoint_path=checkpoints/lora
+python scripts/eval.py --dataset data/sample/eval.jsonl --out outputs/eval
 ```
 
 Outputs:

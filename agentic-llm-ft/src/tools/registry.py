@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 from typing import Any, Callable
 
-from pydantic import ValidationError
-
 from schemas import ToolSpec
 
 ToolFn = Callable[[dict[str, Any]], dict[str, Any]]
+
+
+class ToolArgumentsError(ValueError):
+    """Raised when tool arguments fail validation against the tool spec."""
 
 
 class ToolRegistry:
@@ -49,7 +51,27 @@ class ToolRegistry:
                 return False
         return True
 
+    def _validation_failure_reason(self, name: str, arguments: dict[str, Any]) -> str:
+        """Return a human-readable reason why arguments are invalid."""
+        spec = self.get_spec(name)
+        required = spec.parameters.get("required", [])
+        properties = spec.parameters.get("properties", {})
+
+        for field in required:
+            if field not in arguments:
+                return f"Missing required argument: {field!r}"
+        for key, value in arguments.items():
+            if key not in properties:
+                return f"Unknown argument: {key!r}"
+            expected = properties[key].get("type")
+            if expected == "string" and not isinstance(value, str):
+                return f"Argument {key!r} must be string, got {type(value).__name__}"
+            if expected == "number" and not isinstance(value, (int, float)):
+                return f"Argument {key!r} must be number, got {type(value).__name__}"
+        return "Invalid arguments"
+
     def execute(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if not self.validate_arguments(name, arguments):
-            raise ValidationError.from_exception_data("ToolArguments", [])
+            reason = self._validation_failure_reason(name, arguments)
+            raise ToolArgumentsError(f"Tool {name!r}: {reason}")
         return self._impls[name](arguments)
