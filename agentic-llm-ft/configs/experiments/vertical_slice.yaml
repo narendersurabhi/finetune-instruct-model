@@ -1,0 +1,31 @@
+# Deterministic low-cost profile for the vertical-slice runbook.
+model:
+  max_seq_len: 1024
+
+data:
+  train_path: data/sample/train.jsonl
+  eval_path: data/sample/vertical_slice_eval.jsonl
+
+training:
+  output_dir: outputs/vertical-slice/checkpoints/lora
+  batch_size: 1
+  gradient_accumulation_steps: 1
+  epochs: 1
+  learning_rate: 2e-4
+  logging_steps: 1
+  save_steps: 5
+  qlora: false
+  wandb: false
+
+eval:
+  output_dir: outputs/vertical-slice/eval
+  dataset_path: data/sample/vertical_slice_eval.jsonl
+  max_examples: 2
+  max_seq_len: 1024
+  checkpoint_path: outputs/vertical-slice/checkpoints/lora
+
+inference:
+  output_dir: outputs/vertical-slice/inference
+  mode: batch
+  input: data/sample/batch_prompts.txt
+  prompt: "What's the weather in Seattle?"

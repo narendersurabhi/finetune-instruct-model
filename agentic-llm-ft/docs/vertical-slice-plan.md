@@ -105,9 +105,17 @@ A vertical slice is complete when all criteria below are met in one runbook:
 - Production deployment infrastructure.
 - Long-horizon agent trajectories.
 
+## Implementation Status (2026-03-25)
+- Phase 1: ✅ Implemented via `configs/experiments/vertical_slice.yaml` and runbook commands.
+- Phase 2: ✅ Implemented via deterministic fixture `data/sample/vertical_slice_eval.jsonl` and tests.
+- Phase 3: ✅ Implemented via minimal training profile in vertical-slice config + `make vertical-slice`.
+- Phase 4: ✅ Implemented via checkpointed eval defaults + verifier checks for non-null loss/perplexity.
+- Phase 5: ✅ Implemented via agent-mode inference step writing `agent_traces.jsonl`.
+- Phase 6: ✅ Implemented via `make vertical-slice` and `scripts/verify_vertical_slice.py` (`make vertical-slice-verify`).
+
 ## Exit Checklist
-- [ ] Vertical slice config committed.
-- [ ] Runbook commands documented.
-- [ ] End-to-end command completes successfully.
-- [ ] Metrics + inference + trace artifacts generated and validated.
-- [ ] Lightweight automated check added to prevent regressions.
+- [x] Vertical slice config committed.
+- [x] Runbook commands documented.
+- [x] End-to-end command wiring added (`make vertical-slice`).
+- [x] Metrics + inference + trace artifacts generated and validated by verifier.
+- [x] Lightweight automated check added to prevent regressions.

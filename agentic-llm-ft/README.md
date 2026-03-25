@@ -88,6 +88,21 @@ After step (3), inspect:
 
 ---
 
+
+## Vertical Slice (Phased)
+
+Use the dedicated deterministic profile in `configs/experiments/vertical_slice.yaml` to run the full thin-but-complete slice.
+
+```bash
+# run all phases (train -> eval -> inference)
+make vertical-slice
+
+# verify CI artifact contract
+make vertical-slice-verify
+```
+
+Detailed phased runbook: `docs/vertical-slice-runbook.md`.
+
 ## Repository Layout
 
 ```text
