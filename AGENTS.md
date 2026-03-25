@@ -8,6 +8,17 @@ This file tracks all substantial repository changes and should be read by all ag
 - Sample datasets and test suite added.
 
 ## Change Log
+### 2026-03-25 (vertical slice implementation)
+- Implemented phased vertical-slice execution assets:
+  - added deterministic profile `agentic-llm-ft/configs/experiments/vertical_slice.yaml`,
+  - added deterministic eval fixture `agentic-llm-ft/data/sample/vertical_slice_eval.jsonl`,
+  - added phased runbook `agentic-llm-ft/docs/vertical-slice-runbook.md`,
+  - updated plan tracking statuses in `agentic-llm-ft/docs/vertical-slice-plan.md`,
+  - added artifact verifier `agentic-llm-ft/scripts/verify_vertical_slice.py`,
+  - added `make vertical-slice` and `make vertical-slice-verify` automation targets,
+  - added tests for vertical-slice fixture + checkpoint-metric behavior (`agentic-llm-ft/tests/test_vertical_slice_eval.py`),
+  - updated README with vertical-slice quick commands.
+
 ### 2026-03-25
 - Added a repository-level implementation plan for a full vertical slice at `agentic-llm-ft/docs/vertical-slice-plan.md`, covering scope, phases, success criteria, risks, and CI automation deliverables.
 

@@ -36,4 +36,5 @@ def compute_metrics(records: list[EvalRecord]) -> dict[str, float]:
         "tool_call_precision": precision,
         "tool_call_recall": recall,
         "final_answer_correctness": final_correct,
+        "exact_match": final_correct,
     }
