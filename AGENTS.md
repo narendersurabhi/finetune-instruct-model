@@ -8,6 +8,9 @@ This file tracks all substantial repository changes and should be read by all ag
 - Sample datasets and test suite added.
 
 ## Change Log
+### 2026-03-25
+- Added a repository-level implementation plan for a full vertical slice at `agentic-llm-ft/docs/vertical-slice-plan.md`, covering scope, phases, success criteria, risks, and CI automation deliverables.
+
 ### 2026-03-15 (continued)
 - **Unified model interface:** Eval and agent both use a single **messages-based** interface: `MessageModelFn = Callable[[list[dict]], str]`. Added `render_eval_messages(example)` in `prompts/rendering.py` to build input messages for eval (no assistant turn). Eval harness now takes `model_fn(messages)` and builds messages per example; agent runtime unchanged. Exported `MessageModelFn` from `eval` package.
 - **Hydra integration:** All three entry points use Hydra. Added `configs/config.yaml` (single composed config with `hydra.job.chdir: false`). `scripts/train.py`, `scripts/run_eval.py`, and `scripts/inference.py` use `@hydra.main(config_path=<abs path to configs>, config_name="config")`. Config path is resolved from `__file__` so scripts work from any CWD. Overrides via CLI (e.g. `training.epochs=2`, `eval.dataset_path=...`). Root entry point for eval renamed to `run_eval.py` to avoid shadowing the `eval` package when importing; `eval.py` removed.
